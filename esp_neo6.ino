@@ -9,7 +9,7 @@
 #define BUTTON_PIN 5
 #define MIC_PIN 34
 
-int soundThreshold = 50;
+int soundThreshold = 30;
 TinyGPSPlus gps;
 
 // Create an instance of the HardwareSerial class for Serial 2
@@ -17,6 +17,7 @@ HardwareSerial gpsSerial(2);
 
 bool systemArmed = false;
 bool lastButtonState = HIGH;
+bool gpsTriggered = false;
 
 void setup(){
   // Serial Monitor
@@ -36,6 +37,7 @@ void loop(){
   // Detect button press
   if(buttonState == LOW && lastButtonState == HIGH){
     systemArmed = !systemArmed;
+    gpsTriggered= false;
     delay(200);
 
      if(systemArmed)
@@ -52,7 +54,7 @@ void loop(){
 
   lastButtonState = buttonState;
 
-if(systemArmed){
+if(systemArmed && !gpsTriggered){
   
  int soundValue = analogRead(MIC_PIN);
 
@@ -61,8 +63,10 @@ if(systemArmed){
 
     // Trigger GPS when loud sound detected
     if(soundValue > soundThreshold){
-      Serial.println("Sound Triggered GPS!");
-      
+      Serial.println("reached threshold, Triggered GPS!");
+       gpsTriggered = true;
+    }}
+      if (gpsTriggered){
   // Run GPS only when enabled
   while (gpsSerial.available() > 0){
     // get the byte data from the GPS
@@ -93,5 +97,5 @@ if(systemArmed){
       Serial.println("-------------------------------");
     //Serial.print(gpsData);
   }
-}}}
+}}
 delay (200);} 
