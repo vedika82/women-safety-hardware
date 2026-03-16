@@ -7,13 +7,15 @@
 
 #define GPS_BAUD 9600
 #define BUTTON_PIN 5
+#define MIC_PIN 34
 
+int soundThreshold = 50;
 TinyGPSPlus gps;
 
 // Create an instance of the HardwareSerial class for Serial 2
 HardwareSerial gpsSerial(2);
 
-bool gpsRunning = false;
+bool systemArmed = false;
 bool lastButtonState = HIGH;
 
 void setup(){
@@ -21,7 +23,7 @@ void setup(){
   Serial.begin(115200);
    pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  Serial.println("Press button to start GPS");
+  Serial.println("Press button to start ARM sound detection");
   
   // Start Serial 2 with the defined RX and TX pins and a baud rate of 9600
   gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
@@ -33,19 +35,35 @@ void loop(){
 
   // Detect button press
   if(buttonState == LOW && lastButtonState == HIGH){
-    gpsRunning = !gpsRunning;   // toggle GPS
+    systemArmed = !systemArmed;
     delay(200);
 
-    if(gpsRunning)
-      Serial.println("GPS STARTED");
+     if(systemArmed)
+      Serial.println("SYSTEM ARMED - Listening for sound");
     else
-      Serial.println("GPS STOPPED");
+      Serial.println("SYSTEM DISARMED");
+      
+//    if(gpsRunning)
+//      Serial.println("GPS STARTED");
+//    else
+//      Serial.println("GPS STOPPED");
+
   }
 
   lastButtonState = buttonState;
 
+if(systemArmed){
+  
+ int soundValue = analogRead(MIC_PIN);
+
+    Serial.print("Sound Value: ");
+    Serial.println(soundValue);
+
+    // Trigger GPS when loud sound detected
+    if(soundValue > soundThreshold){
+      Serial.println("Sound Triggered GPS!");
+      
   // Run GPS only when enabled
-  if(gpsRunning){
   while (gpsSerial.available() > 0){
     // get the byte data from the GPS
     char gpsData = gpsSerial.read();
@@ -75,4 +93,5 @@ void loop(){
       Serial.println("-------------------------------");
     //Serial.print(gpsData);
   }
-}}} 
+}}}
+delay (200);} 
