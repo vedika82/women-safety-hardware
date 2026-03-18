@@ -1,5 +1,8 @@
 // Define the RX and TX pins for Serial 2
 #include <TinyGPS++.h>
+#include "esp_camera.h"
+#include <WiFi.h>
+#define CAMERA_MODEL_AI_THINKER
 
 // Define the RX and TX pins for Serial 2
 #define RXD2 16
@@ -9,7 +12,10 @@
 #define BUTTON_PIN 5
 #define MIC_PIN 34
 
-int soundThreshold = 30;
+const char* ssid = "ANAND";
+const char* password = "9013300039";
+
+int soundThreshold = 100;
 TinyGPSPlus gps;
 
 // Create an instance of the HardwareSerial class for Serial 2
@@ -29,7 +35,21 @@ void setup(){
   // Start Serial 2 with the defined RX and TX pins and a baud rate of 9600
   gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
   Serial.println("Serial 2 started at 9600 baud rate");
+  
+  WiFi.begin(ssid, password);
+
+while (WiFi.status() != WL_CONNECTED) {
+  delay(500);
+  Serial.print(".");
 }
+
+Serial.println("");
+Serial.println("WiFi connected");
+Serial.println(WiFi.localIP());
+
+startCameraServer();
+}
+
 
 void loop(){
   bool buttonState = digitalRead(BUTTON_PIN);
@@ -65,6 +85,10 @@ if(systemArmed && !gpsTriggered){
     if(soundValue > soundThreshold){
       Serial.println("reached threshold, Triggered GPS!");
        gpsTriggered = true;
+
+  Serial.println("Starting camera stream...");
+  Serial.print("Open in browser: http://");
+  Serial.println(WiFi.localIP());
     }}
       if (gpsTriggered){
   // Run GPS only when enabled
@@ -98,4 +122,4 @@ if(systemArmed && !gpsTriggered){
     //Serial.print(gpsData);
   }
 }}
-delay (200);} 
+delay (50);} 
