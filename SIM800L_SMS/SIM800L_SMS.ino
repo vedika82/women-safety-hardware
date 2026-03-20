@@ -1,47 +1,43 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial mySerial(3, 2); // RX, TX
+SoftwareSerial mySerial(3, 2);
 
 void setup()
 {
+  
   Serial.begin(9600);
+  
+ 
   mySerial.begin(9600);
 
-  Serial.println("Initializing...");
-  delay(2000);
+  Serial.println("Initializing..."); 
+  delay(1000);
 
-  // Test communication
   mySerial.println("AT");
-  delay(1000);
-  showResponse();
+  updateSerial();
 
-  // Set SMS text mode
-  mySerial.println("AT+CMGF=1");
-  delay(1000);
-  showResponse();
-
-  // Send SMS
-  mySerial.println("AT+CMGS=\"+918279408799\"");
-  delay(1000); // wait for '>'
-
-  mySerial.print("Hello from Vedika GSM 🚀");
-  delay(500);
-
-  mySerial.write(26); // CTRL+Z to send
-  delay(5000); // wait for sending
-
-  showResponse();
+  mySerial.println("AT+CMGF=1"); 
+  updateSerial();
+  mySerial.println("AT+CMGS=\"+918279408799\""); // enter your phone number here (prefix country code)
+  updateSerial();
+  mySerial.print("Hello from Superb Tech"); // enter your message here
+  updateSerial();
+  mySerial.write(26);
 }
 
 void loop()
 {
 }
 
-// Function to print SIM800L response
-void showResponse()
+void updateSerial()
 {
-  while (mySerial.available())
+  delay(500);
+  while (Serial.available()) 
   {
-    Serial.write(mySerial.read());
+    mySerial.write(Serial.read());//Forward what Serial received to Software Serial Port
+  }
+  while(mySerial.available()) 
+  {
+    Serial.write(mySerial.read());//Forward what Software Serial received to Serial Port
   }
 }
