@@ -1,28 +1,28 @@
-#include <SoftwareSerial.h>
-
-SoftwareSerial mySerial(3, 2);
+HardwareSerial gsm(2);  // Use UART2
 
 void setup()
 {
-  
-  Serial.begin(9600);
-  
- 
-  mySerial.begin(9600);
+  Serial.begin(115200);
 
-  Serial.println("Initializing..."); 
+  // RX = 26, TX = 25 (change if needed)
+  gsm.begin(9600, SERIAL_8N1, 26, 25);
+
+  Serial.println("Initializing...");
   delay(1000);
 
-  mySerial.println("AT");
+  gsm.println("AT");
   updateSerial();
 
-  mySerial.println("AT+CMGF=1"); 
+  gsm.println("AT+CMGF=1");
   updateSerial();
-  mySerial.println("AT+CMGS=\"+918279408799\""); // enter your phone number here (prefix country code)
+
+  gsm.println("AT+CMGS=\"+918279408799\"");
   updateSerial();
-  mySerial.print("Hello from Superb Tech"); // enter your message here
+
+  gsm.print("Hello from Superb Tech");
   updateSerial();
-  mySerial.write(26);
+
+  gsm.write(26);  // CTRL+Z to send SMS
 }
 
 void loop()
@@ -32,12 +32,14 @@ void loop()
 void updateSerial()
 {
   delay(500);
-  while (Serial.available()) 
+
+  while (Serial.available())
   {
-    mySerial.write(Serial.read());//Forward what Serial received to Software Serial Port
+    gsm.write(Serial.read());
   }
-  while(mySerial.available()) 
+
+  while (gsm.available())
   {
-    Serial.write(mySerial.read());//Forward what Software Serial received to Serial Port
+    Serial.write(gsm.read());
   }
 }
