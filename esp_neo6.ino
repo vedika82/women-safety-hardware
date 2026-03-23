@@ -8,7 +8,7 @@
 #define BUTTON_PIN 5
 #define MIC_PIN 34  
 
-int soundThreshold = 50;
+int soundThreshold = 100                                                                              ;
 
 TinyGPSPlus gps;
 
@@ -97,9 +97,16 @@ Serial.println("-------------------------------");
 
   gsm.println("AT+CMGS=\"+918279408799\"");
    updateSerial();
-
-    gsm.print("Google Maps Link:");
-    gsm.print("https://maps.google.com/?q=28.721241,77.151276");
+   
+ gsm.println("Latitude: 28.7195082");
+ updateSerial();
+  gsm.println("Longitude:77.0633492 ");
+  updateSerial();
+    
+    gsm.println("Google Maps Link:");
+    updateSerial();
+    
+    gsm.print("https://maps.google.com/?q=28.7195082,77.0633492");
    updateSerial();
 
    gsm.write(26);  // CTRL+Z
