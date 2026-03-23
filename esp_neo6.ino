@@ -1,7 +1,6 @@
-// Define the RX and TX pins for Serial 2
 #include <TinyGPS++.h>
 
-// Define the RX and TX pins for Serial 2
+// Pins
 #define RXD2 16
 #define TXD2 17
 
@@ -9,61 +8,73 @@
 #define BUTTON_PIN 5
 #define MIC_PIN 34  
 
-int soundThreshold = 100;
+int soundThreshold = 50;
+
 TinyGPSPlus gps;
 
-// Create an instance of the HardwareSerial class for Serial 2
-HardwareSerial gpsSerial(2);
+// UART
+HardwareSerial gpsSerial(1);
+HardwareSerial gsm(2);
 
 bool systemArmed = false;
 bool lastButtonState = HIGH;
 bool gpsTriggered = false;
 
-void setup(){
-  // Serial Monitor
+void setup() {
   Serial.begin(115200);
-   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   Serial.println("Press button to start ARM sound detection");
-  
-  // Start Serial 2 with the defined RX and TX pins and a baud rate of 9600
+
   gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
-  Serial.println("Serial 2 started at 9600 baud rate");
+  gsm.begin(9600, SERIAL_8N1, 26, 25);
+
+  Serial.println("System Ready");
 }
 
-void loop(){
+void updateSerial() {
+  delay(500);
+
+  while (Serial.available()) {
+    gsm.write(Serial.read());
+  }
+
+  while (gsm.available()) {
+    Serial.write(gsm.read());
+  }
+}
+
+void loop() {
+
   bool buttonState = digitalRead(BUTTON_PIN);
 
-  // Detect button press
-  if(buttonState == LOW && lastButtonState == HIGH){
+  // Button toggle
+  if (buttonState == LOW && lastButtonState == HIGH) {
     systemArmed = !systemArmed;
-    gpsTriggered= false;
+    gpsTriggered = false;
     delay(200);
 
-     if(systemArmed)
+    if (systemArmed)
       Serial.println("SYSTEM ARMED - Listening for sound");
     else
       Serial.println("SYSTEM DISARMED");
-      
-//    if(gpsRunning)
-//      Serial.println("GPS STARTED");
-//    else
-//      Serial.println("GPS STOPPED");
-
   }
 
   lastButtonState = buttonState;
 
-if(systemArmed && !gpsTriggered){
-  
- int soundValue = analogRead(MIC_PIN);
+  // 🔊 SOUND DETECTION
+  if (systemArmed && !gpsTriggered) {
+
+    int soundValue = analogRead(MIC_PIN);
 
     Serial.print("Sound Value: ");
     Serial.println(soundValue);
 
-    // Trigger GPS when loud sound detected
-    if(soundValue > soundThreshold){
-Serial.println("Reached threshold, Triggered GPS!");
+    if (soundValue > soundThreshold) {
+
+      Serial.println("Threshold reached!");
+      
+      Serial.println("Reached threshold, Triggered GPS!");
 
 Serial.println("Latitude: 28.721241");
 
@@ -75,39 +86,80 @@ Serial.println("Google Maps Link:");
 Serial.println("https://maps.google.com/?q=28.721241,77.151276");
 
 Serial.println("-------------------------------");
-      
-       gpsTriggered = true;
-    }}
-      if (gpsTriggered){
-  // Run GPS only when enabled
-  while (gpsSerial.available() > 0){
-    // get the byte data from the GPS
-    char gpsData = gpsSerial.read();
-     gps.encode(gpsData);
 
-    if (gps.location.isUpdated()){
+     Serial.println("Initializing GSM...");
+    delay(1000);
+    gsm.println("AT");
+    updateSerial();
+    
+   gsm.println("AT+CMGF=1");
+   updateSerial();
 
-      double lat = gps.location.lat();
-      double lon = gps.location.lng();
-      double alt = gps.altitude.meters();
+  gsm.println("AT+CMGS=\"+918279408799\"");
+   updateSerial();
 
-      Serial.print("Latitude: ");
-      Serial.println(lat,6);
+    gsm.print("Google Maps Link:");
+    gsm.print("https://maps.google.com/?q=28.721241,77.151276");
+   updateSerial();
 
-      Serial.print("Longitude: ");
-      Serial.println(lon,6);
-
-      Serial.print("Altitude (m): ");
-      Serial.println(alt);
-
-      Serial.print("Google Maps Link: ");
-      Serial.print("https://maps.google.com/?q=");
-      Serial.print(lat,6);
-      Serial.print(",");
-      Serial.println(lon,6);
-
-      Serial.println("-------------------------------");
-    //Serial.print(gpsData);
+   gsm.write(26);  // CTRL+Z
+   
+      gpsTriggered = true;
+    }
   }
-}}
-delay (200);} 
+
+  // 📍 GPS SECTION
+  if (gpsTriggered) {
+
+    while (gpsSerial.available() > 0) {
+
+      char gpsData = gpsSerial.read();
+      gps.encode(gpsData);
+
+      if (gps.location.isUpdated()) {
+
+        double lat = gps.location.lat();
+        double lon = gps.location.lng();
+        double alt = gps.altitude.meters();
+
+        Serial.print("Latitude: ");
+        Serial.println(lat, 6);
+
+        Serial.print("Longitude: ");
+        Serial.println(lon, 6);
+
+        Serial.print("Altitude (m): ");
+        Serial.println(alt);
+
+        Serial.print("Google Maps Link: ");
+        Serial.print("https://maps.google.com/?q=");
+        Serial.print(lat, 6);
+        Serial.print(",");
+        Serial.println(lon, 6);
+
+        Serial.println("-------------------------------");
+
+      Serial.println("Initializing GSM...");
+      delay(1000);
+
+      gsm.println("AT");
+      updateSerial();
+
+      gsm.println("AT+CMGF=1");
+      updateSerial();
+
+      gsm.println("AT+CMGS=\"+918279408799\"");
+      updateSerial();
+
+      gsm.print("Google Maps Link:");
+       gsm.println("https://maps.google.com/?q=");
+    updateSerial();
+
+
+      gsm.write(26);  // CTRL+Z
+      }
+    }
+  }
+
+  delay(200);
+}

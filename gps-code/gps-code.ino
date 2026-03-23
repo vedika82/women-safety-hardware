@@ -15,7 +15,7 @@ void setup(){
   gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
   Serial.println("Serial 2 started at 9600 baud rate");
 }
-
+697
 void loop(){
   while (gpsSerial.available() > 0){
     // get the byte data from the GPS

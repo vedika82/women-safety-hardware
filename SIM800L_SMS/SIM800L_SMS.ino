@@ -4,7 +4,7 @@ void setup()
 {
   Serial.begin(115200);
 
-  // RX = 26, TX = 25 (change if needed)
+  // RX = 25, TX = 26 (change if needed)
   gsm.begin(9600, SERIAL_8N1, 26, 25);
 
   Serial.println("Initializing...");
@@ -19,9 +19,9 @@ void setup()
   gsm.println("AT+CMGS=\"+918279408799\"");
   updateSerial();
 
-  gsm.print("Hello from Superb Tech");
+  gsm.print("hello the person needs your help :link of location");
   updateSerial();
-
+ 
   gsm.write(26);  // CTRL+Z to send SMS
 }
 
